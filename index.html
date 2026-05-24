@@ -55,11 +55,8 @@
 
   #p1-label, #p2-label {
     position:absolute; top:8px;
-    font-size:0.9rem;
-    font-weight:bold;
-    letter-spacing:3px;
-    padding:5px 12px;
-    border-radius:6px;
+    font-size:0.65rem; letter-spacing:2px;
+    padding:3px 8px; border-radius:4px;
     pointer-events:none; z-index:6;
   }
   #p1-label { left:8px; background:rgba(74,222,128,0.2); color:#4ade80; border:1px solid #4ade8055; }
@@ -184,7 +181,7 @@
   }
   #play-btn:hover { opacity:.85; }
   #play-btn:active { transform:scale(0.98); }
-  #play-btn:disabled { opacity:1; cursor:pointer; }
+  #play-btn:disabled { opacity:0.4; cursor:not-allowed; }
 
   #reset-btn {
     background:#1a1a1a; color:#555; border:1px solid #333;
@@ -254,7 +251,7 @@
     <div id="result-card">
       <div id="idle-text">
         <div id="idle-emoji">✊ 🖐️ ✌️</div>
-        TEKAN SPACE UNTUK MULAI
+        TUNJUKKAN 2 TANGAN<br>LALU TEKAN SPACE
       </div>
       <div id="result-inner" style="display:none; width:100%">
         <div class="moves-row">
@@ -277,9 +274,9 @@
     <div id="guide">
       <div>
         📌 CARA MAIN 2 PLAYER:<br>
-        <span class="g1">P1</span>: tangan kanan<br>
-        <span class="g2">P2</span>: tangan kiri<br>
-        Tekan <span>[ SPACE ]</span> untuk mulai<br>
+        <span class="g1">P1 (KIRI)</span>: tunjukkan tangan kiri<br>
+        <span class="g2">P2 (KANAN)</span>: tunjukkan tangan kanan<br>
+        Tekan <span>[ SPACE ]</span> saat keduanya ✅<br>
         Hitung mundur 3 detik → SNAP!
       </div>
     </div>
@@ -341,12 +338,7 @@ const ctx    = canvas.getContext("2d");
 
 // ── MEDIAPIPE ──
 const hands = new Hands({locateFile:f=>`https://cdn.jsdelivr.net/npm/@mediapipe/hands/${f}`});
-hands.setOptions({
-  maxNumHands: 2,
-  modelComplexity: 1,
-  minDetectionConfidence: 0.7,
-  minTrackingConfidence: 0.7
-});
+hands.setOptions({maxNumHands:2,modelComplexity:1,minDetectionConfidence:0.7,minTrackingConfidence:0.7});
 
 hands.onResults(results=>{
   // Gambar frame mirror
@@ -416,49 +408,51 @@ document.addEventListener("keydown",e=>{
 });
 
 // ── COUNTDOWN ──
+function startCountdown(){
+  if(gameState!=="IDLE") return;
 
+  if(p1Detection==="NONE"||p2Detection==="NONE"){
+    let msg="";
+    if(p1Detection==="NONE"&&p2Detection==="NONE") msg="❓ TUNJUKKAN KEDUA TANGAN DULU!";
+    else if(p1Detection==="NONE") msg="❓ TANGAN P1 (KIRI) BELUM TERDETEKSI!";
+    else msg="❓ TANGAN P2 (KANAN) BELUM TERDETEKSI!";
+    document.getElementById("hud-result").textContent=msg;
+    document.getElementById("hud-result").style.color="#f87171";
+    setTimeout(()=>{
+      if(gameState==="IDLE"){
+        document.getElementById("hud-result").textContent="TEKAN [SPACE] UNTUK MULAI";
+        document.getElementById("hud-result").style.color="#facc15";
+      }
+    },2000);
+    return;
+  }
 
-function startCountdown() {
-  if (isCountingDown) return;
+  gameState="COUNTDOWN";
+  document.getElementById("play-btn").disabled=true;
 
-  isCountingDown = true;
+  const overlay=document.getElementById("countdown-overlay");
+  const numEl  =document.getElementById("countdown-num");
+  overlay.classList.add("show");
 
-  countdownOverlay.classList.add("show");
+  let count=3;
+  numEl.textContent=count;
+  document.getElementById("hud-result").textContent="JANGAN GERAKKAN TANGAN!";
+  document.getElementById("hud-result").style.color="#facc15";
 
-  let count = 3;
-  countdownNum.textContent = count;
-
-  hudResult.textContent = "BERSIAP...";
-
-  countdownInterval = setInterval(() => {
-
+  countdownTimer=setInterval(()=>{
     count--;
-
-    if (count > 0) {
-
-      countdownNum.textContent = count;
-
+    if(count>0){
+      numEl.textContent=count;
+      // Trigger CSS animation restart
+      numEl.style.animation="none";
+      void numEl.offsetWidth;
+      numEl.style.animation="pop 1s ease-in-out infinite";
     } else {
-
-      clearInterval(countdownInterval);
-
-      countdownNum.textContent = "SNAP!";
-
-      setTimeout(() => {
-
-        countdownOverlay.classList.remove("show");
-
-        isCountingDown = false;
-
-        playRound();
-
-      }, 400);
+      clearInterval(countdownTimer);
+      doSnap();
     }
-
-  }, 1000);
+  },1000);
 }
-
-
 
 // ── SNAP ──
 function doSnap(){
