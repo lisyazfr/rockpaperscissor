@@ -59,8 +59,26 @@
     padding:3px 8px; border-radius:4px;
     pointer-events:none; z-index:6;
   }
-  #p1-label { left:8px; background:rgba(74,222,128,0.2); color:#4ade80; border:1px solid #4ade8055; }
-  #p2-label { right:8px; background:rgba(248,113,113,0.2); color:#f87171; border:1px solid #f8717155; }
+  #p1-label {
+    position:absolute;
+    top:8px;
+    right:8px;
+    background:rgba(74,222,128,0.2);
+    color:#4ade80;
+    border:1px solid #4ade8055;
+    padding:4px 10px;
+    border-radius:6px;
+  }
+  #p2-label {
+    position:absolute;
+    top:8px;
+    left:8px;
+    background:rgba(248,113,113,0.2);
+    color:#f87171;
+    border:1px solid #f8717155;
+    padding:4px 10px;
+    border-radius:6px;
+  }
 
   #hud-bottom {
     position:absolute; bottom:0; left:0; right:0;
@@ -244,8 +262,8 @@
   <div id="panel">
 
     <div id="detect-status">
-      <div class="detect-box p1" id="box-p1">P1: ❓ NONE</div>
       <div class="detect-box p2" id="box-p2">P2: ❓ NONE</div>
+      <div class="detect-box p1" id="box-p1">P1: ❓ NONE</div>
     </div>
 
     <div id="result-card">
