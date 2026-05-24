@@ -26,7 +26,6 @@
   #scoreboard span.p { color:#4ade80; }
   #scoreboard span.c { color:#f87171; }
 
-  /* MAIN — mobile: kolom, desktop: baris */
   #main {
     display:flex; gap:12px; padding:10px;
     width:100%; max-width:1100px;
@@ -36,7 +35,6 @@
     #main { flex-direction:row; align-items:flex-start; flex-wrap:wrap; justify-content:center; }
   }
 
-  /* CAMERA BOX */
   #cam-wrap {
     position:relative; width:100%; max-width:640px;
   }
@@ -55,7 +53,6 @@
   #corner-bl { bottom:6px; left:6px; border-width:0 0 2px 2px; }
   #corner-br { bottom:6px; right:6px; border-width:0 2px 2px 0; }
 
-  /* HUD BAWAH KAMERA */
   #hud-bottom {
     position:absolute; bottom:0; left:0; right:0;
     background:rgba(15,15,15,0.88);
@@ -68,7 +65,6 @@
   #hud-locked  { font-size:0.6rem;  color:#aaa;    letter-spacing:1px; margin-bottom:2px; }
   #hud-result  { font-size:0.72rem; font-weight:bold; letter-spacing:2px; }
 
-  /* PANEL BAWAH / KANAN */
   #panel {
     width:100%; max-width:640px;
     display:flex; flex-direction:column; gap:8px;
@@ -77,7 +73,6 @@
     #panel { flex:0 0 280px; max-width:280px; }
   }
 
-  /* RESULT CARD — lebih kecil di mobile */
   #result-card {
     background:#111; border:2px solid #222; border-radius:12px;
     padding:14px 12px; text-align:center;
@@ -103,14 +98,13 @@
   #result-text {
     font-size:1.1rem; letter-spacing:2px; margin-top:4px;
   }
-  /* IDLE TEXT — kecil */
+
   #idle-text {
-    font-size:0.7rem; color:#333; letter-spacing:2px;
+    font-size:0.7rem; color:#787878; letter-spacing:2px;
     text-align:center; padding:8px 0;
   }
   #idle-emoji { font-size:1.6rem; margin-bottom:4px; }
 
-  /* GUIDE — compact */
   #guide {
     background:#111; border:1px solid #1e1e1e;
     border-radius:8px; padding:10px 12px;
@@ -118,7 +112,6 @@
   #guide div { font-size:0.6rem; color:#333; letter-spacing:1px; line-height:2; }
   #guide span { color:#facc15; }
 
-  /* BUTTONS */
   #enter-btn {
     background:#facc15; color:#111; border:none;
     border-radius:8px; padding:12px 0; width:100%;
@@ -138,7 +131,6 @@
   }
   #reset-btn:hover { border-color:#facc15; color:#facc15; }
 
-  /* FOOTER */
   #footer {
     width:100%; text-align:center;
     font-size:0.55rem; color:#222; letter-spacing:2px;
@@ -151,7 +143,7 @@
 <body>
 
 <div id="topbar">
-  <div class="title">✊ RPS — JST GAME ✌️</div>
+  <div class="title">✊ Rock Paper Scrissor JST ✌️</div>
   <div id="scoreboard">
     YOU: <span class="p" id="sc-player">0</span>
     &nbsp;|&nbsp;
@@ -174,7 +166,6 @@
     <video id="video" autoplay playsinline></video>
   </div>
 
-  <!-- PANEL -->
   <div id="panel">
 
     <div id="result-card">
