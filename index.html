@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>Rock Paper Scissors — 2 Player</title>
+<title>Rock Paper Scissors — JST Game</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
   * { margin:0; padding:0; box-sizing:border-box; }
@@ -14,17 +14,17 @@
     min-height:100vh; overflow-x:hidden;
   }
 
+  /* TOP BAR */
   #topbar {
     width:100%; background:#1a1a1a;
     border-bottom:2px solid #facc15;
     padding:8px 16px;
     display:flex; justify-content:space-between; align-items:center;
-    flex-wrap:wrap; gap:4px;
   }
-  .title { color:#facc15; font-size:0.85rem; letter-spacing:2px; }
+  #topbar .title { color:#facc15; font-size:0.85rem; letter-spacing:2px; }
   #scoreboard { font-size:0.85rem; color:#fff; letter-spacing:1px; }
-  #scoreboard span.p1 { color:#4ade80; }
-  #scoreboard span.p2 { color:#f87171; }
+  #scoreboard span.p { color:#4ade80; }
+  #scoreboard span.c { color:#f87171; }
 
   #main {
     display:flex; gap:12px; padding:10px;
@@ -53,18 +53,6 @@
   #corner-bl { bottom:6px; left:6px; border-width:0 0 2px 2px; }
   #corner-br { bottom:6px; right:6px; border-width:0 2px 2px 0; }
 
-  #p1-label, #p2-label {
-    position:absolute; top:8px;
-    font-size:0.9rem;
-    font-weight:bold;
-    letter-spacing:3px;
-    padding:5px 12px;
-    border-radius:6px;
-    pointer-events:none; z-index:6;
-  }
-  #p1-label { left:8px; background:rgba(74,222,128,0.2); color:#4ade80; border:1px solid #4ade8055; }
-  #p2-label { right:8px; background:rgba(248,113,113,0.2); color:#f87171; border:1px solid #f8717155; }
-
   #hud-bottom {
     position:absolute; bottom:0; left:0; right:0;
     background:rgba(15,15,15,0.88);
@@ -73,48 +61,9 @@
     border-radius:0 0 8px 8px;
     pointer-events:none;
   }
-  .hud-row { display:flex; justify-content:space-between; margin-bottom:2px; }
-  #hud-p1 { font-size:0.62rem; color:#4ade80; letter-spacing:1px; }
-  #hud-p2 { font-size:0.62rem; color:#f87171; letter-spacing:1px; text-align:right; }
-  #hud-result { font-size:0.75rem; font-weight:bold; letter-spacing:2px; text-align:center; margin-top:2px; }
-
-  /* COUNTDOWN OVERLAY */
-  #countdown-overlay {
-    position:absolute; inset:0;
-    display:none;
-    align-items:center; justify-content:center;
-    flex-direction:column;
-    background:rgba(0,0,0,0.55);
-    border-radius:8px;
-    z-index:20; pointer-events:none;
-  }
-  #countdown-overlay.show { display:flex; }
-  #countdown-num {
-    font-size:7rem; font-weight:bold;
-    color:#facc15;
-    text-shadow: 0 0 40px #facc15aa, 0 0 80px #facc1566;
-    line-height:1;
-    animation: pop 1s ease-in-out infinite;
-  }
-  @keyframes pop {
-    0%   { transform:scale(0.7); opacity:0.4; }
-    40%  { transform:scale(1.15); opacity:1; }
-    100% { transform:scale(1); opacity:1; }
-  }
-  #countdown-sub {
-    font-size:0.85rem; color:#fff;
-    letter-spacing:3px; margin-top:12px;
-    opacity:0.8;
-  }
-
-  /* SNAP FLASH */
-  #snap-flash {
-    position:absolute; inset:0;
-    background:#facc15;
-    border-radius:8px;
-    opacity:0; pointer-events:none; z-index:25;
-    transition:opacity 0.1s;
-  }
+  #hud-detect  { font-size:0.65rem; color:#00ffff; letter-spacing:1px; margin-bottom:2px; }
+  #hud-locked  { font-size:0.6rem;  color:#aaa;    letter-spacing:1px; margin-bottom:2px; }
+  #hud-result  { font-size:0.72rem; font-weight:bold; letter-spacing:2px; }
 
   #panel {
     width:100%; max-width:640px;
@@ -131,9 +80,9 @@
     align-items:center; justify-content:center;
     transition: border-color 0.3s, background 0.3s;
   }
-  #result-card.p1win { background:#052e16; border-color:#4ade80; }
-  #result-card.p2win { background:#2d0707; border-color:#f87171; }
-  #result-card.draw  { background:#1c1400; border-color:#facc15; }
+  #result-card.win  { background:#052e16; border-color:#4ade80; }
+  #result-card.lose { background:#2d0707; border-color:#f87171; }
+  #result-card.draw { background:#1c1400; border-color:#facc15; }
 
   .moves-row {
     display:flex; justify-content:space-around; width:100%; margin-bottom:10px;
@@ -142,49 +91,36 @@
   .move-emoji { font-size:2.4rem; line-height:1; }
   .move-lbl  { font-size:0.55rem; color:#666; letter-spacing:2px; margin-top:3px; }
   .move-name { font-size:0.75rem; margin-top:2px; }
-  .move-name.p1 { color:#4ade80; }
-  .move-name.p2 { color:#f87171; }
+  .move-name.p { color:#4ade80; }
+  .move-name.c { color:#f87171; }
   .vs { font-size:1rem; color:#facc15; align-self:center; }
-  #result-text { font-size:1.1rem; letter-spacing:2px; margin-top:4px; }
+
+  #result-text {
+    font-size:1.1rem; letter-spacing:2px; margin-top:4px;
+  }
 
   #idle-text {
-    font-size:0.7rem; color:#555; letter-spacing:2px;
+    font-size:0.7rem; color:#787878; letter-spacing:2px;
     text-align:center; padding:8px 0;
   }
-  #idle-emoji { font-size:1.6rem; margin-bottom:6px; }
-
-  #detect-status {
-    display:flex; gap:6px;
-  }
-  .detect-box {
-    flex:1; padding:6px 8px; border-radius:6px;
-    border:1px solid #222; text-align:center;
-    font-size:0.6rem; letter-spacing:1px;
-    transition: border-color 0.3s, background 0.3s;
-  }
-  .detect-box.ready { border-color:#4ade80; background:#052e1644; }
-  .detect-box.p1 { color:#4ade80; }
-  .detect-box.p2 { color:#f87171; }
+  #idle-emoji { font-size:1.6rem; margin-bottom:4px; }
 
   #guide {
     background:#111; border:1px solid #1e1e1e;
     border-radius:8px; padding:10px 12px;
   }
-  #guide div { font-size:0.6rem; color:#444; letter-spacing:1px; line-height:2.1; }
+  #guide div { font-size:0.6rem; color:#787878; letter-spacing:1px; line-height:2; }
   #guide span { color:#facc15; }
-  #guide .g1 { color:#4ade80; }
-  #guide .g2 { color:#f87171; }
 
-  #play-btn {
+  #enter-btn {
     background:#facc15; color:#111; border:none;
     border-radius:8px; padding:12px 0; width:100%;
     font-family:'Share Tech Mono',monospace;
     font-size:0.95rem; letter-spacing:4px; cursor:pointer;
-    transition:opacity .2s, transform .1s;
+    transition:opacity .2s;
   }
-  #play-btn:hover { opacity:.85; }
-  #play-btn:active { transform:scale(0.98); }
-  #play-btn:disabled { opacity:0.4; cursor:not-allowed; }
+  #enter-btn:hover { opacity:.85; }
+  #enter-btn:active { transform:scale(0.98); }
 
   #reset-btn {
     background:#1a1a1a; color:#555; border:1px solid #333;
@@ -207,11 +143,11 @@
 <body>
 
 <div id="topbar">
-  <div class="title">✊ RPS — 2 PLAYER ✌️</div>
+  <div class="title">✊ Rock Paper Scissors — JST ✌️</div>
   <div id="scoreboard">
-    <span class="p1">P1: <span id="sc-p1">0</span></span>
-    &nbsp;|&nbsp; DRAW: <span id="sc-draw">0</span> &nbsp;|&nbsp;
-    <span class="p2">P2: <span id="sc-p2">0</span></span>
+    YOU: <span class="p" id="sc-player">0</span>
+    &nbsp;|&nbsp;
+    CPU: <span class="c" id="sc-cpu">0</span>
   </div>
 </div>
 
@@ -221,70 +157,51 @@
   <div id="cam-wrap">
     <div id="corner-bl"></div>
     <div id="corner-br"></div>
-    <div id="p1-label">◀ PLAYER 1</div>
-    <div id="p2-label">PLAYER 2 ▶</div>
     <canvas id="videoCanvas" width="640" height="480"></canvas>
-
-    <!-- COUNTDOWN OVERLAY -->
-    <div id="countdown-overlay">
-      <div id="countdown-num">3</div>
-      <div id="countdown-sub">JANGAN GERAKKAN TANGAN!</div>
-    </div>
-    <!-- SNAP FLASH -->
-    <div id="snap-flash"></div>
-
     <div id="hud-bottom">
-      <div class="hud-row">
-        <div id="hud-p1">P1: NONE</div>
-        <div id="hud-p2">P2: NONE</div>
-      </div>
-      <div id="hud-result" style="color:#facc15">TEKAN [SPACE] UNTUK MULAI</div>
+      <div id="hud-detect">Tanganmu: NONE</div>
+      <div id="hud-locked">Locked → Player: WAITING vs CPU: WAITING</div>
+      <div id="hud-result" style="color:#facc15">TEKAN [ENTER] UNTUK MAIN</div>
     </div>
     <video id="video" autoplay playsinline></video>
   </div>
 
-  <!-- PANEL -->
   <div id="panel">
-
-    <div id="detect-status">
-      <div class="detect-box p1" id="box-p1">P1: ❓ NONE</div>
-      <div class="detect-box p2" id="box-p2">P2: ❓ NONE</div>
-    </div>
 
     <div id="result-card">
       <div id="idle-text">
         <div id="idle-emoji">✊ 🖐️ ✌️</div>
-        TEKAN SPACE UNTUK MULAI
+        SIAP BERMAIN
       </div>
       <div id="result-inner" style="display:none; width:100%">
         <div class="moves-row">
           <div class="move-box">
-            <div class="move-lbl">PLAYER 1</div>
-            <div class="move-emoji" id="p1-emoji">✊</div>
-            <div class="move-name p1" id="p1-name">ROCK</div>
+            <div class="move-lbl">KAMU</div>
+            <div class="move-emoji" id="p-emoji">✊</div>
+            <div class="move-name p" id="p-name">ROCK</div>
           </div>
           <div class="vs">VS</div>
           <div class="move-box">
-            <div class="move-lbl">PLAYER 2</div>
-            <div class="move-emoji" id="p2-emoji">✊</div>
-            <div class="move-name p2" id="p2-name">ROCK</div>
+            <div class="move-lbl">CPU</div>
+            <div class="move-emoji" id="c-emoji">✊</div>
+            <div class="move-name c" id="c-name">ROCK</div>
           </div>
         </div>
         <div id="result-text">-</div>
       </div>
     </div>
 
-    <div id="guide">
-      <div>
-        📌 CARA MAIN 2 PLAYER:<br>
-        <span class="g1">P1 (KIRI)</span>: tunjukkan tangan kiri<br>
-        <span class="g2">P2 (KANAN)</span>: tunjukkan tangan kanan<br>
-        Tekan <span>[ SPACE ]</span> untuk mulai<br>
-        Hitung mundur 3 detik → SNAP!
-      </div>
-    </div>
-
-    <button id="play-btn" onclick="startCountdown()">▶ &nbsp;SPACE / MULAI</button>
+<div id="guide">
+  <div>
+    📌 CARA MAIN:<br>
+    1. Izinkan kamera<br>
+    2. Tunjukkan tangan<br>
+    3. Tekan <span>ENTER</span><br>
+    4. Hasil 3 detik
+  </div>
+</div>
+    
+    <button id="enter-btn" onclick="doPlay()">▶ &nbsp;ENTER / PLAY</button>
     <button id="reset-btn" onclick="doReset()">↺ &nbsp;RESET SKOR</button>
   </div>
 </div>
@@ -301,26 +218,25 @@ const CLASSES = ["ROCK","PAPER","SCISSORS"];
 const EMOJI   = {"ROCK":"✊","PAPER":"🖐️","SCISSORS":"✌️"};
 const WINS    = {"ROCK":"SCISSORS","PAPER":"ROCK","SCISSORS":"PAPER"};
 
-// ── MLP ──
-function relu(x){ return Math.max(0,x); }
-function matVecAdd(mat,vec,bias){
-  const out=new Array(bias.length).fill(0);
-  for(let j=0;j<bias.length;j++){
+function relu(x) { return Math.max(0,x); }
+function matVecAdd(mat,vec,bias) {
+  const out = new Array(bias.length).fill(0);
+  for(let j=0;j<bias.length;j++) {
     out[j]=bias[j];
     for(let i=0;i<vec.length;i++) out[j]+=mat[i][j]*vec[i];
   }
   return out;
 }
-function softmax(arr){
+function softmax(arr) {
   const max=Math.max(...arr);
   const exps=arr.map(x=>Math.exp(x-max));
   const sum=exps.reduce((a,b)=>a+b,0);
   return exps.map(x=>x/sum);
 }
-function predict(lm){
+function predict(lm) {
   let x=lm;
   const n=WEIGHTS.coefs.length;
-  for(let l=0;l<n;l++){
+  for(let l=0;l<n;l++) {
     x=matVecAdd(WEIGHTS.coefs[l],x,WEIGHTS.intercepts[l]);
     if(l<n-1) x=x.map(relu); else x=softmax(x);
   }
@@ -329,193 +245,63 @@ function predict(lm){
   return {label:CLASSES[mi],prob:x[mi]};
 }
 
-// ── STATE ──
-let p1Detection="NONE", p2Detection="NONE";
-let p1Score=0, p2Score=0, drawScore=0;
-let gameState="IDLE"; // IDLE | COUNTDOWN | RESULT
-let countdownTimer=null, resultTimer=null;
+let currentDetection="NONE", playerScore=0, cpuScore=0;
+let displayTimer=null, landmarks21=null;
 
-const video  = document.getElementById("video");
-const canvas = document.getElementById("videoCanvas");
-const ctx    = canvas.getContext("2d");
+const video=document.getElementById("video");
+const canvas=document.getElementById("videoCanvas");
+const ctx=canvas.getContext("2d");
 
-// ── MEDIAPIPE ──
-const hands = new Hands({locateFile:f=>`https://cdn.jsdelivr.net/npm/@mediapipe/hands/${f}`});
-hands.setOptions({
-  maxNumHands: 2,
-  modelComplexity: 1,
-  minDetectionConfidence: 0.7,
-  minTrackingConfidence: 0.7
-});
+const hands=new Hands({locateFile:f=>`https://cdn.jsdelivr.net/npm/@mediapipe/hands/${f}`});
+hands.setOptions({maxNumHands:1,modelComplexity:1,minDetectionConfidence:0.7,minTrackingConfidence:0.7});
 
 hands.onResults(results=>{
-  // Gambar frame mirror
-  ctx.save();
-  ctx.scale(-1,1); ctx.translate(-canvas.width,0);
+  ctx.save(); ctx.scale(-1,1); ctx.translate(-canvas.width,0);
   ctx.drawImage(results.image,0,0,canvas.width,canvas.height);
   ctx.restore();
-
-  // Garis tengah putus-putus
-  ctx.save();
-  ctx.setLineDash([8,8]);
-  ctx.strokeStyle="rgba(250,204,21,0.35)";
-  ctx.lineWidth=1.5;
-  ctx.beginPath();
-  ctx.moveTo(canvas.width/2,0);
-  ctx.lineTo(canvas.width/2,canvas.height);
-  ctx.stroke();
-  ctx.restore();
-
-  // Reset deteksi
-  if(gameState!=="RESULT"){
-    p1Detection="NONE"; p2Detection="NONE";
+  landmarks21=null; currentDetection="NONE";
+  if(results.multiHandLandmarks&&results.multiHandLandmarks.length>0) {
+    const lm=results.multiHandLandmarks[0];
+    ctx.save(); ctx.scale(-1,1); ctx.translate(-canvas.width,0);
+    drawConnectors(ctx,lm,HAND_CONNECTIONS,{color:"#00FF00",lineWidth:2});
+    drawLandmarks(ctx,lm,{color:"#FF0000",lineWidth:1,radius:3});
+    ctx.restore();
+    const flat=[];
+    for(const p of lm){flat.push(p.x);flat.push(p.y);}
+    landmarks21=flat;
+    currentDetection=predict(flat).label;
   }
-
-  if(results.multiHandLandmarks && results.multiHandLandmarks.length>0){
-    results.multiHandLandmarks.forEach(lm=>{
-      const avgX=lm.reduce((s,p)=>s+p.x,0)/lm.length;
-      const isP1 = avgX < 0.5;
-      const color = isP1 ? "#4ade80" : "#f87171";
-
-      ctx.save();
-      ctx.scale(-1,1); ctx.translate(-canvas.width,0);
-      drawConnectors(ctx,lm,HAND_CONNECTIONS,{color,lineWidth:2});
-      drawLandmarks(ctx,lm,{color,lineWidth:1,radius:3});
-      ctx.restore();
-
-      const flat=[];
-      for(const p of lm){flat.push(p.x);flat.push(p.y);}
-      const result=predict(flat);
-
-      if(gameState!=="RESULT"){
-        if(isP1) p1Detection=result.label;
-        else     p2Detection=result.label;
-      }
-    });
-  }
-
-  // Update HUD & status box (selalu update kecuali RESULT)
-  if(gameState!=="RESULT"){
-    document.getElementById("hud-p1").textContent=`P1: ${p1Detection}`;
-    document.getElementById("hud-p2").textContent=`P2: ${p2Detection}`;
-    const box1=document.getElementById("box-p1");
-    const box2=document.getElementById("box-p2");
-    box1.textContent=`P1: ${p1Detection==="NONE"?"❓ NONE":"✅ "+p1Detection}`;
-    box2.textContent=`P2: ${p2Detection==="NONE"?"❓ NONE":"✅ "+p2Detection}`;
-    box1.classList.toggle("ready",p1Detection!=="NONE");
-    box2.classList.toggle("ready",p2Detection!=="NONE");
-  }
+  document.getElementById("hud-detect").textContent=`Tanganmu: ${currentDetection}`;
 });
 
 const camera=new Camera(video,{onFrame:async()=>{await hands.send({image:video});},width:640,height:480});
 camera.start();
 
-// ── KEYBOARD ──
-document.addEventListener("keydown",e=>{
-  if(e.code==="Space"){ e.preventDefault(); startCountdown(); }
-});
+document.addEventListener("keydown",e=>{if(e.key==="Enter") doPlay();});
 
-// ── COUNTDOWN ──
-
-function startCountdown() {
-  if (isCountingDown) return;
-
-  isCountingDown = true;
-
-  countdownOverlay.classList.add("show");
-
-  let count = 3;
-  countdownNum.textContent = count;
-
-  countdownInterval = setInterval(() => {
-    count--;
-
-    if (count > 0) {
-      countdownNum.textContent = count;
-    } else {
-      clearInterval(countdownInterval);
-
-      countdownNum.textContent = "SNAP!";
-
-      setTimeout(() => {
-        countdownOverlay.classList.remove("show");
-        isCountingDown = false;
-
-        playRound();
-      }, 500);
-    }
-  }, 1000);
-}
-
-
-// ── SNAP ──
-function doSnap(){
-  const overlay=document.getElementById("countdown-overlay");
-  const numEl  =document.getElementById("countdown-num");
-
-  // Tampilkan "SNAP!"
-  numEl.textContent="📸";
-  numEl.style.animation="none";
-  document.getElementById("countdown-sub").textContent="SNAP!";
-
-  // Flash efek
-  const flash=document.getElementById("snap-flash");
-  flash.style.opacity="0.7";
-  setTimeout(()=>{flash.style.opacity="0";},150);
-
-  // Ambil deteksi saat ini
-  const snapP1=p1Detection;
-  const snapP2=p2Detection;
-
-  setTimeout(()=>{
-    overlay.classList.remove("show");
-    document.getElementById("countdown-sub").textContent="JANGAN GERAKKAN TANGAN!";
-
-    // Proses hasil
-    if(snapP1==="NONE"||snapP2==="NONE"){
-      document.getElementById("hud-result").textContent="❓ DETEKSI GAGAL — COBA LAGI";
-      document.getElementById("hud-result").style.color="#f87171";
-      gameState="IDLE";
-      document.getElementById("play-btn").disabled=false;
-      return;
-    }
-
-    showResult(snapP1,snapP2);
-  },600);
-}
-
-// ── SHOW RESULT ──
-function showResult(pc1,pc2){
-  gameState="RESULT";
-
-  let resultText,cardClass,resultColor;
-  if(pc1===pc2){
-    drawScore++;
-    resultText="🤝 SERI (TIE)!";
-    cardClass="draw"; resultColor="#facc15";
-  } else if(WINS[pc1]===pc2){
-    p1Score++;
-    resultText="🏆 PLAYER 1 MENANG!";
-    cardClass="p1win"; resultColor="#4ade80";
-  } else {
-    p2Score++;
-    resultText="🏆 PLAYER 2 MENANG!";
-    cardClass="p2win"; resultColor="#f87171";
+function doPlay(){
+  if(currentDetection==="NONE"||!landmarks21){
+    document.getElementById("hud-result").textContent="❓ TANGAN TIDAK TERDETEKSI!";
+    document.getElementById("hud-result").style.color="#f87171";
+    return;
   }
+  const pc=currentDetection;
+  const cc=CLASSES[Math.floor(Math.random()*3)];
+  let resultText,cardClass,resultColor;
+  if(pc===cc){resultText="HASIL: SERI (TIE)!";cardClass="draw";resultColor="#facc15";}
+  else if(WINS[pc]===cc){resultText="HASIL: KAMU MENANG! ";cardClass="win";resultColor="#4ade80";playerScore++;}
+  else{resultText="HASIL: CPU MENANG! ";cardClass="lose";resultColor="#f87171";cpuScore++;}
 
-  document.getElementById("sc-p1").textContent=p1Score;
-  document.getElementById("sc-p2").textContent=p2Score;
-  document.getElementById("sc-draw").textContent=drawScore;
-
-  document.getElementById("hud-p1").textContent=`P1: ${pc1}`;
-  document.getElementById("hud-p2").textContent=`P2: ${pc2}`;
+  document.getElementById("sc-player").textContent=playerScore;
+  document.getElementById("sc-cpu").textContent=cpuScore;
+  document.getElementById("hud-locked").textContent=`Locked → Player: ${pc} vs CPU: ${cc}`;
   document.getElementById("hud-result").textContent=resultText;
   document.getElementById("hud-result").style.color=resultColor;
 
-  document.getElementById("p1-emoji").textContent=EMOJI[pc1];
-  document.getElementById("p2-emoji").textContent=EMOJI[pc2];
-  document.getElementById("p1-name").textContent=pc1;
-  document.getElementById("p2-name").textContent=pc2;
+  document.getElementById("p-emoji").textContent=EMOJI[pc];
+  document.getElementById("c-emoji").textContent=EMOJI[cc];
+  document.getElementById("p-name").textContent=pc;
+  document.getElementById("c-name").textContent=cc;
   document.getElementById("result-text").textContent=resultText;
   document.getElementById("result-text").style.color=resultColor;
 
@@ -524,35 +310,30 @@ function showResult(pc1,pc2){
   document.getElementById("idle-text").style.display="none";
   document.getElementById("result-inner").style.display="block";
 
-  // Kembali ke IDLE setelah 3.5 detik
-  resultTimer=setTimeout(()=>{
-    gameState="IDLE";
-    document.getElementById("play-btn").disabled=false;
-    document.getElementById("hud-result").textContent="TEKAN [SPACE] UNTUK MULAI";
+  if(displayTimer) clearTimeout(displayTimer);
+  displayTimer=setTimeout(()=>{
+    document.getElementById("hud-result").textContent="TEKAN [ENTER] UNTUK MAIN";
     document.getElementById("hud-result").style.color="#facc15";
+    document.getElementById("hud-locked").textContent="Locked → Player: WAITING vs CPU: WAITING";
     card.className="";
     document.getElementById("idle-text").style.display="block";
     document.getElementById("result-inner").style.display="none";
-  },3500);
+    displayTimer=null;
+  },3000);
 }
 
-// ── RESET ──
 function doReset(){
-  if(countdownTimer) clearInterval(countdownTimer);
-  if(resultTimer)    clearTimeout(resultTimer);
-  gameState="IDLE";
-  p1Score=0; p2Score=0; drawScore=0;
-  document.getElementById("sc-p1").textContent=0;
-  document.getElementById("sc-p2").textContent=0;
-  document.getElementById("sc-draw").textContent=0;
-  document.getElementById("hud-result").textContent="TEKAN [SPACE] UNTUK MULAI";
+  playerScore=0;cpuScore=0;
+  document.getElementById("sc-player").textContent=0;
+  document.getElementById("sc-cpu").textContent=0;
+  document.getElementById("hud-result").textContent="TEKAN [ENTER] UNTUK MAIN";
   document.getElementById("hud-result").style.color="#facc15";
-  document.getElementById("countdown-overlay").classList.remove("show");
-  document.getElementById("play-btn").disabled=false;
+  document.getElementById("hud-locked").textContent="Locked → Player: WAITING vs CPU: WAITING";
   const card=document.getElementById("result-card");
   card.className="";
   document.getElementById("idle-text").style.display="block";
   document.getElementById("result-inner").style.display="none";
+  if(displayTimer){clearTimeout(displayTimer);displayTimer=null;}
 }
 </script>
 </body>
