@@ -200,12 +200,16 @@
       </div>
     </div>
 
-    <div id="guide">
-      <div>
-        📌 CARA MAIN: &nbsp;1. Izinkan kamera &nbsp;2. Tunjukkan tangan &nbsp;3. Tekan <span>ENTER</span> &nbsp;4. Hasil 3 detik
-      </div>
-    </div>
-
+<div id="guide">
+  <div>
+    📌 CARA MAIN:<br>
+    1. Izinkan kamera<br>
+    2. Tunjukkan tangan<br>
+    3. Tekan <span>ENTER</span><br>
+    4. Hasil 3 detik
+  </div>
+</div>
+    
     <button id="enter-btn" onclick="doPlay()">▶ &nbsp;ENTER / PLAY</button>
     <button id="reset-btn" onclick="doReset()">↺ &nbsp;RESET SKOR</button>
   </div>
@@ -294,8 +298,8 @@ function doPlay(){
   const cc=CLASSES[Math.floor(Math.random()*3)];
   let resultText,cardClass,resultColor;
   if(pc===cc){resultText="HASIL: SERI (TIE)!";cardClass="draw";resultColor="#facc15";}
-  else if(WINS[pc]===cc){resultText="HASIL: KAMU MENANG! 🎉";cardClass="win";resultColor="#4ade80";playerScore++;}
-  else{resultText="HASIL: CPU MENANG! 🤖";cardClass="lose";resultColor="#f87171";cpuScore++;}
+  else if(WINS[pc]===cc){resultText="HASIL: KAMU MENANG! ";cardClass="win";resultColor="#4ade80";playerScore++;}
+  else{resultText="HASIL: CPU MENANG! ";cardClass="lose";resultColor="#f87171";cpuScore++;}
 
   document.getElementById("sc-player").textContent=playerScore;
   document.getElementById("sc-cpu").textContent=cpuScore;
