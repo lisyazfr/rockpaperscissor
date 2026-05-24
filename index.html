@@ -218,8 +218,8 @@
   <div id="cam-wrap">
     <div id="corner-bl"></div>
     <div id="corner-br"></div>
-    <div id="p1-label">◀ PLAYER 1</div>
-    <div id="p2-label">PLAYER 2 ▶</div>
+    <div id="p1-label">PLAYER 2 ▶</div>
+    <div id="p2-label">◀ PLAYER 1</div>
     <canvas id="videoCanvas" width="640" height="480"></canvas>
 
     <!-- COUNTDOWN OVERLAY -->
@@ -251,7 +251,7 @@
     <div id="result-card">
       <div id="idle-text">
         <div id="idle-emoji">✊ 🖐️ ✌️</div>
-        TUNJUKKAN 2 TANGAN<br>LALU TEKAN SPACE
+        TEKAN SPACE UNTUK MULAI<br>LALU TUNJUKKAN TANGAN
       </div>
       <div id="result-inner" style="display:none; width:100%">
         <div class="moves-row">
@@ -274,10 +274,10 @@
     <div id="guide">
       <div>
         📌 CARA MAIN 2 PLAYER:<br>
-        <span class="g1">P1 (KIRI)</span>: tunjukkan tangan kiri<br>
-        <span class="g2">P2 (KANAN)</span>: tunjukkan tangan kanan<br>
-        Tekan <span>[ SPACE ]</span> saat keduanya ✅<br>
-        Hitung mundur 3 detik → SNAP!
+        <span class="g1">P1 (KANAN)</span>: tunjukkan tangan kanan<br>
+        <span class="g2">P2 (KIRI)</span>: tunjukkan tangan kiri<br>
+        Tekan <span>[ SPACE ]</span> untuk mulai<br>
+        Countdown 3 detik → deteksi → hasil
       </div>
     </div>
 
@@ -327,186 +327,26 @@ function predict(lm){
 }
 
 // ── STATE ──
-let p1Detection="NONE", p2Detection="NONE";
-let p1Score=0, p2Score=0, drawScore=0;
-let gameState="IDLE"; // IDLE | COUNTDOWN | RESULT
-let countdownTimer=null, resultTimer=null;
 
-const video  = document.getElementById("video");
-const canvas = document.getElementById("videoCanvas");
-const ctx    = canvas.getContext("2d");
-
-// ── MEDIAPIPE ──
-const hands = new Hands({locateFile:f=>`https://cdn.jsdelivr.net/npm/@mediapipe/hands/${f}`});
-hands.setOptions({maxNumHands:2,modelComplexity:1,minDetectionConfidence:0.7,minTrackingConfidence:0.7});
-
-hands.onResults(results=>{
-  // Gambar frame mirror
-  ctx.save();
-  ctx.scale(-1,1); ctx.translate(-canvas.width,0);
-  ctx.drawImage(results.image,0,0,canvas.width,canvas.height);
-  ctx.restore();
-
-  // Garis tengah putus-putus
-  ctx.save();
-  ctx.setLineDash([8,8]);
-  ctx.strokeStyle="rgba(250,204,21,0.35)";
-  ctx.lineWidth=1.5;
-  ctx.beginPath();
-  ctx.moveTo(canvas.width/2,0);
-  ctx.lineTo(canvas.width/2,canvas.height);
-  ctx.stroke();
-  ctx.restore();
-
-  // Reset deteksi
-  if(gameState!=="RESULT"){
-    p1Detection="NONE"; p2Detection="NONE";
-  }
-
-  if(results.multiHandLandmarks && results.multiHandLandmarks.length>0){
-    results.multiHandLandmarks.forEach(lm=>{
-      const avgX=lm.reduce((s,p)=>s+p.x,0)/lm.length;
-      const isP1 = avgX < 0.5;
-      const color = isP1 ? "#4ade80" : "#f87171";
-
-      ctx.save();
-      ctx.scale(-1,1); ctx.translate(-canvas.width,0);
-      drawConnectors(ctx,lm,HAND_CONNECTIONS,{color,lineWidth:2});
-      drawLandmarks(ctx,lm,{color,lineWidth:1,radius:3});
-      ctx.restore();
-
-      const flat=[];
-      for(const p of lm){flat.push(p.x);flat.push(p.y);}
-      const result=predict(flat);
-
-      if(gameState!=="RESULT"){
-        if(isP1) p1Detection=result.label;
-        else     p2Detection=result.label;
-      }
-    });
-  }
-
-  // Update HUD & status box (selalu update kecuali RESULT)
-  if(gameState!=="RESULT"){
-    document.getElementById("hud-p1").textContent=`P1: ${p1Detection}`;
-    document.getElementById("hud-p2").textContent=`P2: ${p2Detection}`;
-    const box1=document.getElementById("box-p1");
-    const box2=document.getElementById("box-p2");
-    box1.textContent=`P1: ${p1Detection==="NONE"?"❓ NONE":"✅ "+p1Detection}`;
-    box2.textContent=`P2: ${p2Detection==="NONE"?"❓ NONE":"✅ "+p2Detection}`;
-    box1.classList.toggle("ready",p1Detection!=="NONE");
-    box2.classList.toggle("ready",p2Detection!=="NONE");
-  }
-});
-
-const camera=new Camera(video,{onFrame:async()=>{await hands.send({image:video});},width:640,height:480});
-camera.start();
-
-// ── KEYBOARD ──
-document.addEventListener("keydown",e=>{
-  if(e.code==="Space"){ e.preventDefault(); startCountdown(); }
-});
-
-// ── COUNTDOWN ──
-function startCountdown(){
-  if(gameState!=="IDLE") return;
-
-  if(p1Detection==="NONE"||p2Detection==="NONE"){
-    let msg="";
-    if(p1Detection==="NONE"&&p2Detection==="NONE") msg="❓ TUNJUKKAN KEDUA TANGAN DULU!";
-    else if(p1Detection==="NONE") msg="❓ TANGAN P1 (KIRI) BELUM TERDETEKSI!";
-    else msg="❓ TANGAN P2 (KANAN) BELUM TERDETEKSI!";
-    document.getElementById("hud-result").textContent=msg;
-    document.getElementById("hud-result").style.color="#f87171";
-    setTimeout(()=>{
-      if(gameState==="IDLE"){
-        document.getElementById("hud-result").textContent="TEKAN [SPACE] UNTUK MULAI";
-        document.getElementById("hud-result").style.color="#facc15";
-      }
-    },2000);
-    return;
-  }
-
-  gameState="COUNTDOWN";
-  document.getElementById("play-btn").disabled=true;
-
-  const overlay=document.getElementById("countdown-overlay");
-  const numEl  =document.getElementById("countdown-num");
-  overlay.classList.add("show");
-
-  let count=3;
-  numEl.textContent=count;
-  document.getElementById("hud-result").textContent="JANGAN GERAKKAN TANGAN!";
-  document.getElementById("hud-result").style.color="#facc15";
-
-  countdownTimer=setInterval(()=>{
-    count--;
-    if(count>0){
-      numEl.textContent=count;
-      // Trigger CSS animation restart
-      numEl.style.animation="none";
-      void numEl.offsetWidth;
-      numEl.style.animation="pop 1s ease-in-out infinite";
-    } else {
-      clearInterval(countdownTimer);
-      doSnap();
-    }
-  },1000);
-}
-
-// ── SNAP ──
-function doSnap(){
-  const overlay=document.getElementById("countdown-overlay");
-  const numEl  =document.getElementById("countdown-num");
-
-  // Tampilkan "SNAP!"
-  numEl.textContent="📸";
-  numEl.style.animation="none";
-  document.getElementById("countdown-sub").textContent="SNAP!";
-
-  // Flash efek
-  const flash=document.getElementById("snap-flash");
-  flash.style.opacity="0.7";
-  setTimeout(()=>{flash.style.opacity="0";},150);
-
-  // Ambil deteksi saat ini
-  const snapP1=p1Detection;
-  const snapP2=p2Detection;
-
-  setTimeout(()=>{
-    overlay.classList.remove("show");
-    document.getElementById("countdown-sub").textContent="JANGAN GERAKKAN TANGAN!";
-
-    // Proses hasil
-    if(snapP1==="NONE"||snapP2==="NONE"){
-      document.getElementById("hud-result").textContent="❓ DETEKSI GAGAL — COBA LAGI";
-      document.getElementById("hud-result").style.color="#f87171";
-      gameState="IDLE";
-      document.getElementById("play-btn").disabled=false;
-      return;
-    }
-
-    showResult(snapP1,snapP2);
-  },600);
-}
-
-// ── SHOW RESULT ──
-function showResult(pc1,pc2){
-  gameState="RESULT";
-
-  let resultText,cardClass,resultColor;
-  if(pc1===pc2){
-    drawScore++;
     resultText="🤝 SERI (TIE)!";
-    cardClass="draw"; resultColor="#facc15";
+    cardClass="draw";
+    resultColor="#facc15";
+
   } else if(WINS[pc1]===pc2){
+
     p1Score++;
+
     resultText="🏆 PLAYER 1 MENANG!";
-    cardClass="p1win"; resultColor="#4ade80";
+    cardClass="p1win";
+    resultColor="#4ade80";
+
   } else {
+
     p2Score++;
+
     resultText="🏆 PLAYER 2 MENANG!";
-    cardClass="p2win"; resultColor="#f87171";
+    cardClass="p2win";
+    resultColor="#f87171";
   }
 
   document.getElementById("sc-p1").textContent=p1Score;
@@ -515,35 +355,51 @@ function showResult(pc1,pc2){
 
   document.getElementById("hud-p1").textContent=`P1: ${pc1}`;
   document.getElementById("hud-p2").textContent=`P2: ${pc2}`;
+
   document.getElementById("hud-result").textContent=resultText;
   document.getElementById("hud-result").style.color=resultColor;
 
   document.getElementById("p1-emoji").textContent=EMOJI[pc1];
   document.getElementById("p2-emoji").textContent=EMOJI[pc2];
+
   document.getElementById("p1-name").textContent=pc1;
   document.getElementById("p2-name").textContent=pc2;
+
   document.getElementById("result-text").textContent=resultText;
   document.getElementById("result-text").style.color=resultColor;
 
   const card=document.getElementById("result-card");
+
   card.className=cardClass;
+
   document.getElementById("idle-text").style.display="none";
   document.getElementById("result-inner").style.display="block";
 
-  // Kembali ke IDLE setelah 3.5 detik
   resultTimer=setTimeout(()=>{
+
     gameState="IDLE";
+
     document.getElementById("play-btn").disabled=false;
-    document.getElementById("hud-result").textContent="TEKAN [SPACE] UNTUK MULAI";
+
+    document.getElementById("hud-result").textContent=
+      "TEKAN [SPACE] UNTUK MULAI";
+
     document.getElementById("hud-result").style.color="#facc15";
+
     card.className="";
+
     document.getElementById("idle-text").style.display="block";
     document.getElementById("result-inner").style.display="none";
+
   },3500);
 }
 
 // ── RESET ──
 function doReset(){
+  liveP1="NONE";
+  liveP2="NONE";
+  p1Detection="NONE";
+  p2Detection="NONE";
   if(countdownTimer) clearInterval(countdownTimer);
   if(resultTimer)    clearTimeout(resultTimer);
   gameState="IDLE";
